@@ -21,22 +21,34 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from tkinter import filedialog
 
+ABOUT = """
 
-# biblio = {"Title": ["harry potter", "Il codice da vinci","il Signore degli anelli"], "Author": ["Rowling", "Brown", "Tolkien"], "Position" : ["a55", "b2","d3"], "Editorial" : ["la fenice", "Erudita", "Oxford Express"], "Year": [1990, 2002, 1997]}
-# dataframe = pd.DataFrame(biblio)
-# with open("C:\\Users\\pepermatt94\\OneDrive\\Libri Magistrale\\SOFTWARE and COMPUTING\\biblio.txt", 'w') as f:
-#         f.write(dataframe.to_string(index=False))
+This is a proptotype program for library management. 
 
+The author and the developer of the program claims only 
+an honest regard on his own for his work and his time. 
+
+Each develop, modification or, even more, saling or 
+distribution of this product is free in a 
+gentle agreement with the author and the law.
+
+The program is completely open source, 
+and the source code of the program can be found on github at page 
+https://github.com/peppermatt94/Bibliotkinter .
+
+There is no lucrative or secondary aim in this project, 
+but only the hope that the knowledge
+of God and the Gospel expands. 
+
+signature of the author:
+pepermatt94
+pep.94@libero.it .
+"""
 
 #variable and initialization
 
-
-dataframe=pd.read_csv("biblio.txt", sep = "\t")
-dataframe = dataframe.astype(str)
-
-dataframeLoan = pd.read_csv("biblioLend.txt")
-dataframeLoan = dataframeLoan.astype(str)
 
 window = tk.Tk()
 window.title("Biblio")
@@ -52,16 +64,22 @@ Author = tk.StringVar()
 Position = tk.StringVar()
 Editorial = tk.StringVar()
 Year = tk.StringVar()
+ 
 
 #initialization of credentials
     
-InternalPassword= b"RM.MEXICO" #password to initialize the encypter
+InternalPassword= b"RM.MEXICO" #password to initialize the encrypter
 
 #user and password variable
 USER = tk.StringVar()
 PASSWORD = tk.StringVar()
-
+RepositorySelected = 0
 #intializing function
+
+def about():
+    aboutWin = tk.Toplevel()
+    aboutWin.iconbitmap('Seminario_RM.ico')
+    label2 = tk.Label(aboutWin, text = ABOUT).pack()
 
 def initializerPWD():
     global tip
@@ -76,9 +94,120 @@ def initializerPWD():
     pwd = tk.Label(initializeWin, text = "password").grid(row=2, column=0, padx=10)
     get_pwd = tk.Entry(initializeWin, textvariable = PASSWORD, show = "*").grid(row=2, column=1, sticky = "WE", padx=10)
     account = tk.Button(initializeWin, text = "create account", command =lambda: createAccount(USER,PASSWORD, initializeWin)).grid(row=3,column=2, padx=10, pady = 10)
+ 
+
+
+def add_repository(win , NameRP, nameln):
+    global filenameREPO
+    global filenameLOAN
+    global dataframe
+    global dataframeLoan
+    name=NameRP.get()
+    nameLN = nameln.get()
+    filenameREPO = os.getcwd() + "\\" + name + ".txt"
+    filenameLOAN = os.getcwd() + "\\" + nameLN + ".txt"
     
-#def initializerREPO():
-#    window.filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("txt files","*.txt"),("all files","*.*")))
+    NameRP.set("")
+    nameln.set("")
+    
+    if name=="" or nameLN =="":
+        warn = tk.Toplevel()
+        warn.title("WARNING")
+        warn.iconbitmap('warn.ico')
+        warn.geometry("300x100")
+        label = tk.Label(warn, text="You must fullfilled both the fields \n for book and loan").pack()
+        ok = tk.Button(warn, text = "ok", command = warn.destroy).pack()
+        return None
+    else:
+        with open(filenameREPO, "w") as f:
+            header = {"Title": [], "Author": [], "Position" : [], "Editorial" : [], "Year": [], "Available": []}
+            header = pd.DataFrame(header)
+            header.to_csv(f, sep = "\t", index = False) 
+            
+        with open(filenameLOAN, "w") as f:
+            header = {"Keeper": [], "Adress": [], "Title": [], "Author": [], "Position" : [], "Editorial" : [], "Year": []}
+            header = pd.DataFrame(header)
+            header.to_csv(f, sep="\t", index = False) 
+        with open("parameter.txt", "a") as f:
+            f.write(filenameREPO + "," +filenameLOAN +"\n")
+        
+        try:
+            dataframe=pd.read_csv(filenameREPO, sep = "\t",encoding = "latin1")     
+            dataframe = dataframe.astype(str)
+            dataframeLoan = pd.read_csv(filenameLOAN, sep = "\t", encoding = "latin1")    
+            dataframeLoan = dataframeLoan.astype(str)
+        except:
+            pass
+        win.destroy()
+    
+def initializerREPO():
+    initRP = tk.Toplevel()
+    
+    access = tk.Label(initRP, text = "Create a repository or choose one from your computer.").grid(row=0, column=1,sticky = "WE", padx=10, pady=10)
+    
+    accessRP = tk.Label(initRP, text = "Book repository").grid(row=1, column=0,sticky = "WE", padx=10, pady=10)
+    accessLN = tk.Label(initRP, text = "Loan repository").grid(row=2, column=0,sticky = "WE", padx=10, pady=10)
+    
+    
+    chooseRP = tk.Button(initRP, text = "Choose files in your computer", command = browse).grid(row=1,column=2, padx=10, pady = 10)
+    #chooseLN = tk.Button(initRP, text = "Choose file for loan", command = browse).grid(row=3,column=2, padx=10, pady = 10)
+    
+    CreateRP = tk.Button(initRP, text = "Create a repository for book", command =lambda: add_repository(initRP, NameRP,NameLN)).grid(row=2,column=2, padx=10, pady = 10)
+
+    NameRP =tk.StringVar()
+    NameLN =tk.StringVar()
+    
+    nameF = tk.Entry(initRP, textvariable = NameRP).grid(row=1, column=1, sticky = "WE", padx=10)
+    roomF = tk.Entry(initRP, textvariable = NameLN).grid(row=2, column=1, sticky = "WE", padx=10)
+        
+def newRep():
+    if os.path.exists("parameter.txt"):
+        os.remove("parameter.txt")
+        initializerREPO()
+    else:
+        initializerREPO()
+
+def openRep():
+    if os.path.exists("parameter.txt"):
+        os.remove("parameter.txt")
+        browse()
+    else:
+        browse()
+    
+    
+def newCredential():
+    openPWDrequest2()
+    
+    
+def browse():
+    global filenameREPO
+    global filenameLOAN
+    global dataframe
+    global dataframeLoan
+    filenameREPO =  filedialog.askopenfilename(initialdir = "/",title = "Select file for your repository",filetypes = (("txt files","*.txt"),("csv files","*.csv"),("all files","*.*")))
+    filenameLOAN = filedialog.askopenfilename(initialdir = "/",title = "Select file for your loan",filetypes = (("txt files","*.txt"),("csv files","*.csv"),("all files","*.*")))
+    
+    if filenameREPO=="" or filenameLOAN=="":
+        warn = tk.Toplevel()
+        warn.title("WARNING")
+        warn.iconbitmap('warn.ico')
+        warn.geometry("300x100")
+        label = tk.Label(warn, text="You must fullfilled both the fields \n for book and loan").pack()
+        ok = tk.Button(warn, text = "ok", command = warn.destroy).pack()
+        return None
+    else:
+        with open("parameter.txt", "a") as f:
+            f.write(filenameREPO + "," +filenameLOAN + "\n")
+        
+        try:
+            dataframe=pd.read_csv(filenameREPO, sep = "\t", encoding = "latin1")     
+            dataframe = dataframe.astype(str)
+            dataframeLoan = pd.read_csv(filenameLOAN, sep = "\t", encoding = "latin1")    
+            dataframeLoan = dataframeLoan.astype(str) 
+        except:
+            pass
+        
+        
 def make_password(password, salt):    #PBKDFHMAC generate a good password froma a password we pass, generating an hashing with salt(random hash) and then enctrypted in base64
 	kdf = PBKDF2HMAC(
 		algorithm=hashes.SHA256(),
@@ -112,7 +241,37 @@ def createAccount(get_user,get_pwd, win):
 if glob.glob("credentials.txt") == []:  
     initializerPWD()
 
-       
+if glob.glob("parameter.txt") == []:
+    initializerREPO()
+else:
+    with open("parameter.txt", "r") as f:
+        files = f.read()
+        
+        files = files.splitlines()
+        if len(files)==1:
+            
+            
+            files[0] = files[0].split(",")
+            files = files[0]
+        else:
+            
+            selector = RepositorySelected
+            for i in range(len(files)):
+                
+                files[i]= files[i].split(",")
+                files = files[RepositorySelected]
+                
+    filenameREPO =  files[0]
+    filenameLOAN = files[1]
+    
+    try:
+        dataframe=pd.read_csv(filenameREPO, sep = "\t", encoding = "latin1")
+        dataframe = dataframe.astype(str)
+        dataframeLoan=pd.read_csv(filenameLOAN, sep = "\t", encoding = "latin1")
+        dataframeLoan = dataframeLoan.astype(str)
+    except:
+        pass
+
 #functions executed by the buttons
 
 def merging_search(field, strfield):
@@ -124,6 +283,7 @@ def merging_search(field, strfield):
         field.set("")
         rank = dataframe[position]
         return rank
+    
 def merging_search2(field, strfield):
     name = field.get()
     if name=="":
@@ -151,7 +311,13 @@ def search():
     dfYear = merging_search(Year, "Year")
     dfEdit = merging_search(Editorial, "Editorial")
     dfPosition = merging_search(Position, "Position")
+    
     Resultsdf = dfTitle.merge(dfAuthor.merge(dfYear.merge(dfEdit.merge(dfPosition))))
+    
+    Resultsdf = dfTitle[dfTitle.isin(dfAuthor)].dropna()
+    Resultsdf = Resultsdf[Resultsdf.isin(dfPosition)].dropna()
+    Resultsdf = Resultsdf[Resultsdf.isin(dfYear)].dropna()
+    Resultsdf = Resultsdf[Resultsdf.isin(dfEdit)].dropna()
     
     GeneralAnswer = to_string(Resultsdf, "all")
     answerTitle = to_string(dfTitle, "Title")
@@ -190,12 +356,17 @@ def add_book():
             Warn.title("WARNING")
             access = tk.Label(Warn, text = "The field position must be fullfilled\n A book cannot be wherever").grid(row=0, column=0,sticky = "WE", padx=10)
             ok = tk.Button(Warn, text = "ok", command = Warn.destroy).grid(row=1,column=0, padx = 10, pady=30)
-        with open("biblio.txt", 'w') as f:
+        with open(filenameREPO, 'w') as f:
             book_to_append = {"Title": [title], "Author": [author], "Position" : [position], "Editorial" : [edit], "Year": [year], "Available": ["Yes"]}
             book_to_append = pd.DataFrame(book_to_append)
             dataframe = dataframe.append(book_to_append)
             #dataframe = dataframe.sort("Title")
             dataframe.to_csv(f, sep = "\t", index = False)
+            
+        with open(filenameREPO, 'r') as f:
+             dataframe=pd.read_csv(filenameREPO, sep = "\t", encoding = "latin1")
+             dataframe = dataframe.astype(str)
+            
         
 def explore_repository():
     Repository = tabulate(dataframe, headers = 'keys', tablefmt = 'simple')
@@ -207,6 +378,16 @@ def explore_repository():
     myFont = Font(family="Times New Roman", size=12)
     text.configure(font=myFont)
 
+def explore_loan_repository():
+    Repository = tabulate(dataframeLoan, headers = 'keys', tablefmt = 'simple')
+    TextWin = tk.Toplevel()
+    TextWin.title("REPOSITORY RM MEXICO")
+    text = tkscrolled.ScrolledText(TextWin)
+    text.insert(tk.END, Repository)
+    text.grid(row=0, column=0, columnspan= 1, sticky= "WE", padx=10, pady = 10)
+    myFont = Font(family="Times New Roman", size=12)
+    text.configure(font=myFont)
+    
 def online_search():
     title=Title.get()
     author=Author.get()
@@ -216,9 +397,12 @@ def online_search():
     webbrowser.open(f"https://www.google.com/search?q={request}&oq={request}&aqs=edge..69i57j69i60l3.478j0j4&sourceid=chrome&ie=UTF-8")
     
 #functions for password requests 
-    
+
+  
+
 def openPWDrequest():
     pwdWindow = tk.Toplevel()
+    pwdWindow.iconbitmap('Seminario_RM.ico')
     pwdWindow.title("Credentials required")
     #pwdWindow.geometry("100x200")
     access = tk.Label(pwdWindow, text = "Insert password").grid(row=0, column=1,sticky = "WE", padx=10)
@@ -227,6 +411,58 @@ def openPWDrequest():
     pwd = tk.Label(pwdWindow, text = "Password").grid(row=2, column=0,sticky = "WE", padx=10)
     get_pwd = tk.Entry(pwdWindow, textvariable = PASSWORD, show="*").grid(row=2, column=1, sticky = "WE", padx=10, pady=10)
     done = tk.Button(pwdWindow, text = "done", command = lambda: controlPWD(USER, PASSWORD, pwdWindow)).grid(row=3,column=2, padx = 10, pady=30)
+
+def openPWDrequest2():
+    pwdWindow = tk.Toplevel()
+    pwdWindow.iconbitmap('Seminario_RM.ico')
+    pwdWindow.title("Credentials required")
+    #pwdWindow.geometry("100x200")
+    access = tk.Label(pwdWindow, text = "Insert password").grid(row=0, column=1,sticky = "WE", padx=10)
+    user = tk.Label(pwdWindow, text = "Username").grid(row=1, column=0,sticky = "WE", padx=10)
+    get_user = tk.Entry(pwdWindow, textvariable = USER).grid(row=1, column=1, sticky = "WE", padx=10)
+    pwd = tk.Label(pwdWindow, text = "Password").grid(row=2, column=0,sticky = "WE", padx=10)
+    get_pwd = tk.Entry(pwdWindow, textvariable = PASSWORD, show="*").grid(row=2, column=1, sticky = "WE", padx=10, pady=10)
+    done = tk.Button(pwdWindow, text = "done", command = lambda: controlPWD2(USER, PASSWORD, pwdWindow)).grid(row=3,column=2, padx = 10, pady=30)
+
+def controlPWD2(get_user, get_pwd, pwd):
+    
+    
+    username=get_user.get()
+    password=get_pwd.get()
+    get_user.set("")
+    get_pwd.set("")
+    
+    InsertedCredentials = [username,password]
+    with open("credentials.txt", "r") as cred:
+        credentials = cred.read()
+    
+    
+    salt = base64.b64decode(credentials[:24].encode("utf-8"))
+    cipher_suite = Fernet(make_password(InternalPassword, salt))
+    plain_text = cipher_suite.decrypt(credentials[24:].encode("utf-8"))
+    credentials = plain_text.decode("utf-8")
+    credentials = io.StringIO(credentials)
+    credentials = credentials.read().splitlines()
+    
+    for i in range(len(credentials)):
+        credentials[i] = credentials[i].split(",")
+    
+    if credentials[0] == InsertedCredentials:
+        access = tk.Label(pwd, text = "correct credentials").grid(row=3, column=1,sticky = "WE", padx=10, pady=30)
+        if os.path.exists("credentials.txt"):
+            os.remove("credentials.txt")
+            initializerPWD()
+        else:
+            initializerPWD()
+        pwd.destroy()   
+    else: 
+        control = False
+        access = tk.Label(pwd, text = "Access denied").grid(row=3, column=1,sticky = "WE", padx=10, pady=30)
+        return None
+    
+    #access = tk.Label(pwd, text = "correct credentials").grid(row=2, column=1,sticky = "WE", padx=10, pady=30)
+    
+    pwd.destroy()
 
 
 def controlPWD(get_user, get_pwd, pwd):
@@ -259,16 +495,17 @@ def controlPWD(get_user, get_pwd, pwd):
     else: 
         control = False
         access = tk.Label(pwd, text = "Access denied").grid(row=3, column=1,sticky = "WE", padx=10, pady=30)
-        sleep(5)
+        
         return None
     
-    access = tk.Label(pwd, text = "correct credentials").grid(row=2, column=1,sticky = "WE", padx=10, pady=30)
-    add_book()
-    control=True
-    pwd.destroy()
+    #access = tk.Label(pwd, text = "correct credentials").grid(row=2, column=1,sticky = "WE", padx=10, pady=30)
+    #add_book()
+    #control=True
+    #pwd.destroy()
      
 def search_book():
     searchWin = tk.Toplevel()
+    searchWin.iconbitmap('Seminario_RM.ico')
     searchWin.title("Edit repository")   
     access = tk.Label(searchWin, text = "write the position of the book you want to edit").grid(row=0, column=0,sticky = "WE", padx=10)
     book = tk.Entry(searchWin, textvariable = Position).grid(row=1, column=0, sticky = "WE", padx=10)
@@ -281,9 +518,11 @@ def search_book():
 
 
 def warning(Position):
-    found =  merging_search(Position, "Position")
+    pos = Position.get()
+    found =  dataframe[dataframe["Position"]==pos]
     warn = found.to_string(index=False)
     Warn = tk.Toplevel()
+    window.iconbitmap('warn.ico')
     Warn.title("WARNING") 
     access = tk.Label(Warn, text = f"Are you sure to delete the following book?\n{warn}").grid(row=0, column=0,sticky = "WE", padx=10)
     ok = tk.Button(Warn, text = "I'm sure", command =lambda: eliminateBook(Warn,found)).grid(row=1,column=0, padx = 10, pady=30)
@@ -294,78 +533,107 @@ def eliminateBook(Warn,found):
     global dataframe
     Warn.destroy()
     dataframe = dataframe.drop(labels=found.index, axis=0)
-    with open("biblio.txt", 'w') as f:
+    with open(filenameREPO, 'w') as f:
             dataframe.to_csv(f, sep = "\t", index = False)
     
 
 def loan(Position):
-    found =  merging_search(Position, "Position")
+    
+    pos = Position.get()
+    found =  dataframe[dataframe["Position"]==pos]
     warn = found.to_string(index=False)
     loanWin = tk.Toplevel()
-    loanWin.title("Edit repository")
+    loanWin.title("Loan")
     info = tk.Label(loanWin, text = f"you are loaning the book:\n{warn}\n Insert the Id of receving").grid(row=0, column=0,sticky = "WE", padx=10)
     
+    Name = tk.StringVar()
+    Room = tk.StringVar()
+    
     name = tk.Label(loanWin, text = "name and surname").grid(row=0, column=1)
-    nameF = tk.Entry(loanWin, textvariable = Title).grid(row=0, column=2, sticky = "WE", padx=100)
+    nameF = tk.Entry(loanWin, textvariable = Name).grid(row=0, column=2, sticky = "WE", padx=100)
 
     room = tk.Label(loanWin, text = "room/adress").grid(row=1, column=1)
-    roomF = tk.Entry(loanWin, textvariable = Author).grid(row=1, column=2, sticky = "WE", padx=100)
+    roomF = tk.Entry(loanWin, textvariable = Room).grid(row=1, column=2, sticky = "WE", padx=100)
     
-    take = tk.Button(loanWin, text = "insert", command=lambda: load(found,Title, Author,loanWin)).grid(row = 2,column=1, padx = 10, pady=30)
-
-def load(found, Title, Author,win):
+    take = tk.Button(loanWin, text = "insert", command=lambda: load(found,Name, Room,loanWin)).grid(row = 2,column=1, padx = 10, pady=30)
+   
+def load(found, Name, Room,win):
     global dataframe
     global dataframeLoan  
    
-    nome = Title.get() 
-    adress = Author.get()
-    Title.set("")
-    Author.set("")
-    with open("biblioLend.txt", 'w') as f:
+    nome = Name.get() 
+    adress = Room.get()
+    Name.set("")
+    Room.set("")
+    book_to_append = {"Keeper": [nome], "Adress": [adress], "Title": found["Title"], "Author": found["Author"], "Position" : found["Position"], "Editorial" : found["Editorial"], "Year": found["Year"]}
+    
+    book_to_append = pd.DataFrame(book_to_append)
+    dataframeLoan = dataframeLoan.append(book_to_append)
+    
+    with open(filenameLOAN, 'w') as f:
+            
             book_to_append = {"Keeper": [nome], "Adress": [adress], "Title": found["Title"], "Author": found["Author"], "Position" : found["Position"], "Editorial" : found["Editorial"], "Year": found["Year"]}
+                       
             book_to_append = pd.DataFrame(book_to_append)
             dataframeLoan = dataframeLoan.append(book_to_append)
             #dataframe = dataframe.sort("Title")
             dataframeLoan.to_csv(f, sep = "\t", index = False)
+            
+    
     dataframe["Available"][found.index] = "No"
-    with open("biblio.txt", 'w') as f:
-        dataframe.to_csv(f, sep = "\t", index = False)
+    with open(filenameREPO, 'w') as f:
+        dataframe.to_csv(f, sep = "\t", index = False, encoding = "utf8")
     
     win.destroy()      
 
 def restitution():
     global dataframeLoan
-    restWin = tk.Toplevel()
     
+    nome = tk.StringVar()
+    rome = tk.StringVar()
+    titolo = tk.StringVar()
+    posi = tk.StringVar()
+    
+    restWin = tk.Toplevel()
+    restWin.iconbitmap('Seminario_RM.ico')
     name = tk.Label(restWin, text = "name and surname").grid(row=1, column=0)
-    nameF = tk.Entry(restWin, textvariable = Title).grid(row=1, column=1, sticky = "WE", padx=100)
+    nameF = tk.Entry(restWin, textvariable = nome).grid(row=1, column=1, sticky = "WE", padx=100)
 
     room = tk.Label(restWin, text = "room/adress").grid(row=2, column=0)
-    roomF = tk.Entry(restWin, textvariable = Author).grid(row=2, column=1, sticky = "WE", padx=100)
+    roomF = tk.Entry(restWin, textvariable = rome).grid(row=2, column=1, sticky = "WE", padx=100)
         
     pos = tk.Label(restWin, text = "Position").grid(row=3, column=0)
-    search_field_position = tk.Entry(restWin, textvariable = Position).grid(row=3, column=1, sticky = "WE", padx=100)
+    search_field_position = tk.Entry(restWin, textvariable =pos).grid(row=3, column=1, sticky = "WE", padx=100)
 
-    title = tk.Label(restWin, text = "Title").grid(row=1, column=0)
-    search_field_Title = tk.Entry(restWin, textvariable = Editorial).grid(row=1, column=1, sticky = "WE", padx=100)
+    title = tk.Label(restWin, text = "Title").grid(row=4, column=0)
+    search_field_Title = tk.Entry(restWin, textvariable = titolo).grid(row=4, column=1, sticky = "WE", padx=100)
     
-    dfname = merging_search(Title, "keeper")
-    dfroom = merging_search(Author, "Adress")
-    dfposition = merging_search(Position, "Position")
-    dfTitle = merging_search(Editorial, "Title")
     
-    Resultsdf = dfname.merge(dfroom.merge(dfposition.merge(dfTitle)))
     
-    take = tk.Button( text = "restitute", command=lambda: resa(Resultsdf,restWin)).grid(row = 1,column=2)
+    take = tk.Button(restWin, text = "restitute", command=lambda: resa(titolo, nome, rome, posi,restWin)).grid(row = 1,column=2)
 
-def resa(found,win):
+def resa(titolo, nome, rome, pos,win):
     global dataframeLoan
-    dataframeLoan = dataframeLoan.drop(labels=found.index, axis=0)
-    with open("biblioLend.txt", 'w') as f:
+    dfname = merging_search2(nome, "Keeper")
+    dfroom = merging_search2(rome, "Adress")
+    dfposition = merging_search2(pos, "Position")
+    dfTitle = merging_search2(titolo, "Title")
+    
+    Resultsdf = dfTitle[dfTitle.isin(dfroom)].dropna()
+    Resultsdf = Resultsdf[Resultsdf.isin(dfposition)].dropna()
+    Resultsdf = Resultsdf[Resultsdf.isin(dfname)].dropna()
+    
+    
+    dataframeLoan = dataframeLoan.drop(labels=Resultsdf.index, axis=0)
+   
+    with open(filenameLOAN, 'w') as f:
             dataframeLoan.to_csv(f, sep = "\t", index = False)
-            
-    dataframe["Available"][found.index] = "Yes"
-    with open("biblio.txt", 'w') as f:
+     
+    with open(filenameLOAN, 'r') as f:
+            dataframeLoan = pd.read_csv(f, sep = "\t",  encoding = "latin1")    
+        
+    dataframe["Available"][Resultsdf.index] = "Yes"
+    with open(filenameREPO, 'w') as f:
         dataframe.to_csv(f, sep = "\t", index = False)
        
     win.destroy()
@@ -391,10 +659,35 @@ search_field_Year = tk.Entry( textvariable = Year).grid(row=5, column=1, sticky 
 
 #button of the gui
 
-searchButton = tk.Button( text = "Search", command=search).grid(row = 1,column=2)
-Addbutton = tk.Button(text = "Add to repository", command = openPWDrequest).grid(row=2,column=2)
-exploreButton = tk.Button(text = "Explore Repository", command = explore_repository).grid(row=3,column=2)
-onlineButton = tk.Button(text = "Search online", command = online_search).grid(row=4,column=2)
-eliminateButton = tk.Button(text = "Delete Book", command = search_book).grid(row=5,column=2)
-loanButton= tk.Button(text = "Loan", command = search_book).grid(row=6,column=2)
+searchButton = tk.Button( text = "Search", command=search, height = 2, width = 15).grid(row = 1,column=2)
+Addbutton = tk.Button(text = "Add to repository", command = openPWDrequest, height = 2, width = 15).grid(row=2,column=2)
+exploreButton = tk.Button(text = "Explore Repository", command = explore_repository, height = 2, width = 15).grid(row=3,column=2)
+exploreButton = tk.Button(text = "Explore Loan \nRepository", command = explore_loan_repository, height = 2, width = 15).grid(row=4,column=2)
+onlineButton = tk.Button(text = "Search online", command = online_search, height = 2, width = 15).grid(row=5,column=2)
+#eliminateButton = tk.Button(text = "Delete Book", command = search_book).grid(row=5,column=2)
+#loanButton= tk.Button(text = "Loan", command = search_book).grid(row=6,column=2)
+
+#fileMenu
+
+menu = tk.Menu(window)
+window.config(menu=menu)
+fileMenu = tk.Menu(menu)
+menu.add_cascade(label="File", menu=fileMenu)
+fileMenu.add_command(label="New Repository", command = newRep)
+fileMenu.add_command(label = "Open Repository", command = openRep)
+fileMenu.add_command(label = "New Credentials", command = newCredential)
+
+editMenu = tk.Menu(menu)
+menu.add_cascade(label="Option", menu=editMenu)
+editMenu.add_command(label="Delete a Book", command = search_book)
+editMenu.add_command(label="Loan book",command = search_book)
+editMenu.add_command(label="Restitution", command =restitution)
+editMenu.add_command(label="Explore repository", command =explore_repository)
+editMenu.add_command(label="Explore loan repository", command =explore_loan_repository)
+
+
+aboutMenu = tk.Menu(menu)
+menu.add_cascade(label="?", menu=aboutMenu)
+aboutMenu.add_command(label = "About", command = about)
+
 window.mainloop()
