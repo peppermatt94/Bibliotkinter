@@ -87,43 +87,50 @@ def Start_init(filenameREPO, filenameLOAN, variableString, credentials, REMOTE =
         Workdir = "Z:\\RMbiblio\\"
     else:
         Workdir = os.getcwd() +"\\"
+    
     if not os.path.exists(Workdir+".setup\\credentials.txt"):  
         init.initializerPWD(credentials,init.initializerREPO, new_win)
     
     #if not os.path.exists(Workdir+".setup\\parameter.txt"):
     #    init.initializerREPO(filenameREPO, filenameLOAN)
     else:
-        with open(Workdir+".setup\\parameter.txt", "r") as f:
-            files = f.read()
-            
-            files = files.splitlines()
-            if len(files)==1:
+        try:            
+            with open(Workdir+".setup\\parameter.txt", "r") as f:
+                files = f.read()
                 
+                files = files.splitlines()
+                if len(files)==1:
+                    
+                    
+                    files[0] = files[0].split(",")
+                    files = files[0]
+                else:
+                    RepositorySelected = 0
+                    selector = RepositorySelected
+                    for i in range(len(files)):
+                        
+                        files[i]= files[i].split(",")
+                        files = files[RepositorySelected]
+            
+                       
+            init.filenameREPO =  files[0]
+            init.filenameLOAN = files[1]
+            
+            init.SpecialVar["Title"] = files[2]
+            init.SpecialVar["Author"] = files[3]
+            init.SpecialVar["Position"] = files[4]
+            #New variables
                 
-                files[0] = files[0].split(",")
-                files = files[0]
-            else:
-                RepositorySelected = 0
-                selector = RepositorySelected
-                for i in range(len(files)):
-                    
-                    files[i]= files[i].split(",")
-                    files = files[RepositorySelected]
-                    
-        init.filenameREPO =  files[0]
-        init.filenameLOAN = files[1]
-        #New variables
             
-        try:
-            
-            init.dataframe=pd.read_csv(init.filenameREPO, sep = ",", encoding = "latin1")
+                
+            init.dataframe=pd.read_csv(init.filenameREPO, sep = ";", encoding = "latin1")
             init.dataframe = init.dataframe.replace(np.nan, '', regex=True)
             init.dataframe = init.dataframe.astype(str)
-            init.dataframeLoan = pd.read_csv(init.filenameLOAN, sep = ",", encoding = "latin1")
+            init.dataframeLoan = pd.read_csv(init.filenameLOAN, sep = ";", encoding = "latin1")
             init.dataframeLoan = init.dataframeLoan.replace(np.nan, '', regex=True)
             init.dataframeLoan = init.dataframeLoan.astype(str)  
         except:
-            pass
+            init.initializerREPO(init.filenameREPO, init.filenameLOAN, new_win)
 
         
         new_win(init.dataframe, init.dataframeLoan, init.filenameREPO, init.credentials, init.variableString, init.window)
@@ -195,7 +202,7 @@ def new_win(dataframe, dataframeLoan, filenameREPO, credentials, variableString,
     canvas.create_window((10, 10), window=scrollable_frame, anchor="nw")
 
     canvas.configure(yscrollcommand=scrollbar.set)
-
+    
     #for i in range(50):
     #    tk.Label(scrollable_frame, text="Sample scrolling label").grid(row = i, column=10)
     
