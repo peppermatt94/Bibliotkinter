@@ -58,27 +58,27 @@ def search(dataframe, dataframeLoan, window,container, canvas, scrollbar):
     positionINcanvasRow = 7
     GeneralAnswer = Resultsdf
     for key, val in init.variableString.items():
-        if key == "Title" or key =="Título":
+        if key == init.SpecialVar["Title"]:
             Title = dfReturns[f"df{key}"]
             if not Title.equals(init.dataframe)==True:
-                LabelTitle = ttk.Label(window, text = "The search for Title has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 20, sticky= "WE")
+                LabelTitle = ttk.Label(window, text = f"The search for {key} has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 20, sticky= "WE")
                 treview(window, Title, init.variableString, positionINcanvasRow+1,0, 10,2)
                 positionINcanvasRow=positionINcanvasRow+4
             else:
-                LabelTitle = ttk.Label(window, text = "No search for Title.").grid(row=positionINcanvasRow, column=0, columnspan= 20, sticky= "WE") 
+                LabelTitle = ttk.Label(window, text = f"No search for {key}.").grid(row=positionINcanvasRow, column=0, columnspan= 20, sticky= "WE") 
                 positionINcanvasRow=positionINcanvasRow+1
-        if key == "Author" or key=="Autor":
+        if key == init.SpecialVar["Author"]:
             Author = dfReturns[f"df{key}"]
             if not Author.equals(init.dataframe)==True:
-                LabelAuthor = ttk.Label(window, text = "The search for Author has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
+                LabelAuthor = ttk.Label(window, text = f"The search for {key} has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
                 treview(window, Author, init.variableString,positionINcanvasRow+1,0,10,2)
                 positionINcanvasRow=positionINcanvasRow+4
             else:
-                LabelAuthor = ttk.Label(window, text = "No search for author.").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
+                LabelAuthor = ttk.Label(window, text = f"No search for {key}.").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
                 positionINcanvasRow=positionINcanvasRow+1
                 
     if not GeneralAnswer.equals(init.dataframe) == True:           
-        LabelGeneral = tk.Label(window, text = "The search for All Field has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
+        LabelGeneral = tk.Label(window, text = "The search for All Fields has found this match:").grid(row=positionINcanvasRow, column=0, columnspan= 1, sticky= "WE")
         
         treview(window, GeneralAnswer, init.variableString, positionINcanvasRow +1,0,10,4)
     else:
