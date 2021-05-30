@@ -14,6 +14,7 @@ import numpy as np
 from os.path import abspath
 from pathlib import Path
 import ctypes
+import tkinter.tix as tix
 
 #Global variables
 def init():
@@ -25,18 +26,23 @@ def init():
     global filenameREPO
     global filenameLOAN
     global REMOTE
-    global variableString
+    global SpecialVar
     global StringOfRestitution
+    global variableString
+    global LabelField
+    SpecialVar={}
     dataframe=None
     dataframeLoan=None
     window = None
     variableString={}
+    LabelField = {}
     RequestsFields = {}
     credentials = {}  
     filenameREPO = ""
     filenameLOAN = ""
     REMOTE = "No"
     StringOfRestitution = {}
+    
 InternalPassword= b"RM.MEXICO" #password to initialize the encrypter
 
 
@@ -86,52 +92,65 @@ def add_repository(win , NameRP, nameln, newWin, REMOTE ="No"):
        warning("You must fullfilled both the repository and loan repository fields")
        return None
     else:
+        header={}
         with open(filenameREPO, "w", encoding = "latin1" ) as f:
-            header = {"Title": [], "Author": [], "Position" : [], "Editorial" : [], "Year": [], "Available": []}
+            #header = {"Title": [], "Author": [], "Position" : [], "Editorial" : [], "Year": [], "Available": []}
+            for key, values in variableString.items():
+                header[key]= [] 
+            header["Available"] = []
             header = pd.DataFrame(header)
-            header.to_csv(f, sep = ",", index = False) 
+            header.to_csv(f, sep = ";", index = False) 
             
         with open(filenameLOAN, "w", encoding = "latin1" ) as f:
-            header = {"Keeper": [], "Adress": [], "Title": [], "Author": [], "Position" : [], "Date of loan" : [], "Date of restitution":[]}
+            header = {"Keeper": [], "Adress": [], "Title": [], "Author": [], "Position" : [],"Contact" :[], "Date of loan" : [], "Date of restitution":[]}
             header = pd.DataFrame(header)
-            header.to_csv(f, sep=",", index = False) 
-        
-        if not os.path.exists(Workdir+".setup"): os.makedirs(Workdir +".setup")
-        with open(Workdir + ".setup\\parameter.txt", "w") as f:
-            f.write(filenameREPO + "," +filenameLOAN +"\n")        
+            header.to_csv(f, sep=";", index = False) 
         try:
-            dataframe=pd.read_csv(filenameREPO, sep = ",",encoding = "latin1")    
+            dataframe=pd.read_csv(filenameREPO, sep = ";",encoding = "latin1")    
             dataframe =dataframe.replace(np.nan, '', regex=True)
             dataframe = dataframe.astype(str)
-            dataframeLoan = pd.read_csv(filenameLOAN, sep = ",", encoding = "latin1")
+            dataframeLoan = pd.read_csv(filenameLOAN, sep = ";", encoding = "latin1")
             dataframeLoan = dataframeLoan.replace(np.nan, '', regex=True)
             dataframeLoan = dataframeLoan.astype(str)
         except:
-            pass
-        
+            print("I didn't manage to load the dataframe")
         init.dataframe = dataframe
         init.dataframeLoan = dataframeLoan
+        parameter( win,Workdir, newWin)
+
+def parameter( win, Workdir,newWin): 
+             
+        if not os.path.exists(Workdir+".setup"): 
+            os.makedirs(Workdir +".setup")
+            ctypes.windll.kernel32.SetFileAttributesW(".setup", 2)
+        with open(Workdir + ".setup\\parameter.txt", "w") as f:
+            f.write(filenameREPO + "," +filenameLOAN +","+SpecialVar["Title"].get()+"," +SpecialVar["Author"].get()+","+SpecialVar["Position"].get()+"\n")        
+        
+        SpecialVar["Title"] = SpecialVar["Title"].get()
+        SpecialVar["Author"] = SpecialVar["Author"].get()
+        SpecialVar["Position"] = SpecialVar["Position"].get()
         win.destroy()
-        newWin(dataframe, dataframeLoan, filenameREPO, credentials, variableString, init.window)
+        newWin(dataframe, dataframeLoan, filenameREPO, credentials, variableString, window)
     
 def initializerREPO(filenameREPO, filenameLOAN, newWin):
     global dataframe
     global dataframeLoan  
-
+    
+   
     initRP = tk.Tk()
     access = tk.Label(initRP, text = "Create a repository or choose one from your computer.").grid(row=0, column=1,sticky = "WE", padx=10, pady=10)
     
-    NameP =tk.StringVar(initRP)
-    NameN =tk.StringVar(initRP)
-    NameP.set("sono io")
+    NameRP =tk.StringVar(initRP)
+    NameLN =tk.StringVar(initRP)
+    
     accessRP = tk.Label(initRP, text = "Book repository").grid(row=1, column=0,sticky = "WE", padx=10, pady=10)
     accessLN = tk.Label(initRP, text = "Loan repository").grid(row=2, column=0,sticky = "WE", padx=10, pady=10)
     
-    nameF = tk.Entry(initRP, textvariable = NameP).grid(row=1, column=1, sticky = "WE", padx=10)
-    roomF = tk.Entry(initRP, textvariable = NameN).grid(row=2, column=1, sticky = "WE", padx=10)
+    nameF = tk.Entry(initRP, textvariable = NameRP).grid(row=1, column=1, sticky = "WE", padx=10)
+    roomF = tk.Entry(initRP, textvariable = NameLN).grid(row=2, column=1, sticky = "WE", padx=10)
 
     chooseRP = tk.Button(initRP, text = "Choose files in your computer", command =lambda: browse(initRP,newWin)).grid(row=1,column=2, padx=10, pady = 10)
-    CreateRP = tk.Button(initRP, text = "Create a repository for book", command =lambda: add_repository(initRP, NameP,NameN, newWin)).grid(row=2,column=2, padx=10, pady = 10)
+    CreateRP = tk.Button(initRP, text = "Create a repository for book", command =lambda: format_repository(initRP,NameRP, NameLN, newWin)).grid(row=2,column=2, padx=10, pady = 10)
     
     # nameF = tk.Entry(initRP, textvariable = NameRP).grid(row=1, column=1, sticky = "WE", padx=10)
     # roomF = tk.Entry(initRP, textvariable = NameLN).grid(row=2, column=1, sticky = "WE", padx=10)
@@ -171,9 +190,9 @@ def browse(initRP,newWin, REMOTE ="No"):
     global window
     global filenameREPO
     global filenameLOAN
-    
-    filenameREPO =  filedialog.askopenfilename(initialdir = "/",title = "Select file for your repository",filetypes = (("txt files","*.txt"),("csv files","*.csv"),("all files","*.*")))
-    filenameLOAN = filedialog.askopenfilename(initialdir = "/",title = "Select file for your loan",filetypes = (("txt files","*.txt"),("csv files","*.csv"),("all files","*.*")))
+    global variableString
+    filenameREPO =  filedialog.askopenfilename(initialdir = "/",title = "Select file for your repository",filetypes = (("csv files","*.csv"),("all files","*.*")))
+    filenameLOAN = filedialog.askopenfilename(initialdir = "/",title = "Select file for your loan",filetypes = (("csv files","*.csv"),("all files","*.*")))
     
     
     if filenameREPO=="" or filenameLOAN=="":
@@ -213,32 +232,40 @@ def browse(initRP,newWin, REMOTE ="No"):
                 dataframe["Available"] = ["Yes" for i in dataframe.index]
             dataframe = dataframe.replace(np.nan, '', regex=True)
             dataframe = dataframe.astype(str)
-            dataframeLoan = pd.read_csv(filenameLOAN, sep = ",", encoding = "latin1")    
+            dataframeLoan = pd.read_csv(filenameLOAN, sep = ";", encoding = "latin1")    
             dataframeLoan = dataframeLoan.replace(np.nan, '', regex=True)
             dataframeLoan = dataframeLoan.astype(str) 
             
         except:
             pass
-        filenameREPO=filenameREPO[:-4] + "NEW.csv" #it is necessary for problem of permission create a new file. I didn't manage to do otherwise
-        #breakpoint()
-        with open(filenameREPO, "w", encoding = "latin1" ) as f:
-            dataframe.to_csv(f, sep =",", index = False)
-            
+        try:
+            with open(filenameREPO, "w", encoding = "latin1" ) as f:
+                dataframe.to_csv(f, sep =";", index = False)
+        except:
+            filenameREPO=filenameREPO[:-4] + "NEW.csv" #it is necessary for problem of permission create a new file. I didn't manage to do otherwise
+            with open(filenameREPO, "w", encoding = "latin1" ) as f:
+                dataframe.to_csv(f, sep =";", index = False)
         with open(filenameLOAN, "w", encoding = "latin1" ) as f:
-            dataframeLoan.to_csv(f, sep =",", index = False)
+            dataframeLoan.to_csv(f, sep =";", index = False)
         
         init.filenameREPO = filenameREPO
         init.filenameLOAN = filenameLOAN
         init.dataframeLoan = dataframeLoan
         init.dataframe=dataframe
+        variableString={}
+        for i in dataframe.columns:
+            variableString[i] = tk.StringVar()
+            variableString[i].set(i)
         
-        #create a setup folder to record the setup
-        if not os.path.exists(Workdir +".setup"): os.makedirs(Workdir +".setup")
-        with open(Workdir+".setup//parameter.txt", "w") as f:
-            f.write(filenameREPO + "," +filenameLOAN + "\n")
-        #breakpoint()
+        select_Special_columns(initRP, parameter, Workdir, newWin)
         
-        newWin(init.dataframe, init.dataframeLoan, init.filenameREPO, credentials, variableString,initRP)
+        # #create a setup folder to record the setup
+        # if not os.path.exists(Workdir +".setup"): os.makedirs(Workdir +".setup")
+        # with open(Workdir+".setup//parameter.txt", "w") as f:
+        #     f.write(filenameREPO + "," +filenameLOAN + "\n")
+        # #breakpoint()
+        
+        # #newWin(init.dataframe, init.dataframeLoan, init.filenameREPO, credentials, variableString,initRP)
         
 def make_password(password, salt):    #PBKDFHMAC generate a good password froma a password we pass, generating an hashing with salt(random hash) and then enctrypted in base64
 	kdf = PBKDF2HMAC(
@@ -267,7 +294,9 @@ def createAccount(get_user,get_pwd, win, initRepo, newWin, REMOTE ="No",):
         WorkDir = "Z:\\RMbiblio\\"  
     else:
         Workdir = os.getcwd() + "\\"
-    if not os.path.exists(Workdir +".setup"): os.makedirs(Workdir +".setup")
+    if not os.path.exists(Workdir +".setup"): 
+        os.makedirs(Workdir +".setup")
+        ctypes.windll.kernel32.SetFileAttributesW(".setup", 2)
     with open(Workdir+".setup\\credentials.txt", "w") as cred:
          cred.write(cipher_text_utf8)
     win.destroy()
@@ -330,8 +359,7 @@ def controlPWD(get_user, get_pwd, pwd, functionForTheRequests, *args, REMOTE = "
   
     #initiializing warning message
     
-def warning(message, function = None, Continue ="No"):
-    
+def warning(message, function = None, Continue ="No"):  
     Warn = tk.Toplevel()
     Warn.iconbitmap('warn.ico')
     Warn.title("WARNING") 
@@ -340,3 +368,69 @@ def warning(message, function = None, Continue ="No"):
         ok = tk.Button(Warn, text = "Continue", command =lambda: [function, Warn.destroy]).grid(row=1,column=0, padx = 10, pady=30)
     No = tk.Button(Warn, text = "Canceal", command = Warn.destroy).grid(row=1,column=1, padx = 10, pady=30)
     
+def format_repository(win,NameRP, NameLN, NewWin):
+    global variableString
+    win.destroy()
+    formatWin = tk.Tk()
+    variableString={}
+    
+    explain=tk.Label(formatWin,text = "Choose the name and the number of the columns").grid(row=0, column=0, columnspan =12)
+    plusButton = tk.Button(formatWin, text="Add column",height =1, width=10, command = lambda: Add_Entry_in_format_win(formatWin)).grid(row = 1, column = 0, columnspan=2 )
+    subtractButton = tk.Button(formatWin, text="Del column", height =1, width=10,command = lambda: subtract_entry_in_format_win(formatWin)).grid(row = 1, column = 2, columnspan=2 )
+    applyButton = tk.Button(formatWin, text="Apply",height =1, width=10, command = lambda: select_Special_columns(formatWin, add_repository, NameRP, NameLN, NewWin)).grid(row = 1, column = 4, columnspan=2 )
+    info =tk.Label(formatWin,text = "*An 'Available' field is alreeady present in reposotory").grid(row=2, column=0, columnspan =12)
+    formatWin.mainloop()
+    
+def Add_Entry_in_format_win(win):
+    
+    global variableString
+    number= len(variableString)
+    variableString[f"{number+1}"] = tk.StringVar(win)
+    LabelField[f"{number+1}"] = tk.Label(win, text = f"{number+1}^st col. name").grid(row = number+3, column = 0, columnspan = 1, padx = 5)
+    RequestsFields[f"{number+1}_entry"] = tk.Entry(win, textvariable= variableString[f"{number+1}"]).grid(row = number+3, column = 2, columnspan = 6)
+    
+    
+def subtract_entry_in_format_win(win):
+    global variableString
+    number = len(variableString)
+    
+    try:
+        del variableString[f"{number}"]
+        win.grid_slaves()[0].destroy()
+        win.grid_slaves()[0].destroy()
+    except:
+        pass
+    
+def select_Special_columns(win,  function, *args):
+    global window
+    if not win == window:
+        win.destroy()
+    
+    global variableString
+    message = "You are loading a database with the following fields:\n"
+    for key, values in variableString.items():
+        message = message + f"{values.get()}\t"
+    tmpDict = variableString
+    variableString = {}
+    for key, values in tmpDict.items():
+        variableString[values.get()] = tmpDict[key]
+    message = message+ "\nYou must pick up among the given fields the special fields of Title, Author and Position"
+    message2="*Please be precise and rewritten the field perfectly in the same way, also in the case and special characters"
+    specialFieldsWin = tk.Tk() 
+    tk.Label(specialFieldsWin, text = message).pack()
+    for i in ["Title", "Author", "Position"]:
+        SpecialVar[i] = tk.StringVar(specialFieldsWin)
+        tk.Label(specialFieldsWin, text = f"pick the {i} field:").pack()
+        tk.Entry(specialFieldsWin, textvariable = SpecialVar[i]).pack() 
+    tk.Label(specialFieldsWin, text=message2).pack()
+    applyButton = tk.Button(specialFieldsWin, text="apply", command = lambda: function(specialFieldsWin,*args)).pack()
+    specialFieldsWin.mainloop()
+    
+def trial():
+    for key,value in SpecialVar.items():
+        print(key,value.get())
+# init()    
+# format_repository()
+
+
+
