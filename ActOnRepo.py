@@ -13,15 +13,19 @@ def add_book(dataframe, dataframeLoan, variableString, filenameREPO):
     book_to_append = {}
     for key, value in variableString.items():
         book_to_append[key] = [value.get()]
-        if key == "Title" or "Tìtulo":
+        if key == init.SpecialVar["Title"]:
             SpecialVarTitle = value.get()
-        if key == "Author" or key=="Autor": 
+        if key == init.SpecialVar["Author"]: 
             SpecialVarAuthor = value.get()
-        if key == "Position" or key=="Estantería":
+        if key == init.SpecialVar["Position"]:
              SpecialVarPos = value.get()
         if key == "Available":
             book_to_append[key] = "Yes"
-  
+    
+           
+    if not init.dataframe[init.dataframe[init.SpecialVar["Position"]].isin([SpecialVarPos])].empty :
+        init.warning("There is already a book in that position.\nIt's impossible that two book are in the same place.\nMaybe you missed something?")
+        return None
     voidTesT = [values == [""] for values in book_to_append.values()]
     if all(voidTesT):
         message = "The fields cannot be all empty!!!"
@@ -36,10 +40,10 @@ def add_book(dataframe, dataframeLoan, variableString, filenameREPO):
             book_to_append = pd.DataFrame(book_to_append).dropna()
             dataframe = dataframe.append(book_to_append)
             dataframe = dataframe.astype(str)
-            dataframe.to_csv(f, sep = ",", index = False)
+            dataframe.to_csv(f, sep = ";", index = False)
             
         with open(filenameREPO, 'r') as f:
-             dataframe=pd.read_csv(filenameREPO, sep = ",", encoding = "latin1")
+             dataframe=pd.read_csv(filenameREPO, sep = ";", encoding = "latin1")
              dataframe = dataframe.replace(np.nan, '', regex=True)
              dataframe = dataframe.astype(str)
              dataframe = dataframe.replace(np.nan, '', regex=True)
@@ -67,23 +71,23 @@ def explore_loan_repository(dataframeLoan, StringOfRestitution):
 def eliminateBook(dataframe, filenameREPO,variableString):
     
     for key, value in variableString.items():
-        if (key == "Position") ^ (key == "Estantería"):
+        if key == init.SpecialVar["Position"]:
             position = value.get()
             found_book =  init.dataframe[init.dataframe[key]==position]
           
     init.dataframe = init.dataframe.drop(labels=found_book.index, axis=0)
     with open(filenameREPO, 'w',  encoding = "latin1" ) as f:
-            init.dataframe.to_csv(f, sep = ",", index = False)
+            init.dataframe.to_csv(f, sep = ";", index = False)
     
 
 def loan_id_insert(dataframe, dataframeLoan, variableString,filenameREPO, filenameLOAN):  
     
     for key, value in variableString.items():
-        if (key == "Position") ^ (key == "Estantería"):
+        if key == init.SpecialVar["Position"]:
             position = value.get()
             found_book =  dataframe[dataframe[key]==position]
     message =""
-    for i in dataframe.columns[:-1]:
+    for i in [init.SpecialVar["Title"], init.SpecialVar["Author"], init.SpecialVar["Position"]]:
         message += str(dataframe[i].iloc[0]) + " "
     #message = found_book.to_string(index=False)
     loanWin = tk.Toplevel()
@@ -92,6 +96,7 @@ def loan_id_insert(dataframe, dataframeLoan, variableString,filenameREPO, filena
     
     Name = tk.StringVar()
     Room = tk.StringVar()
+    Contact = tk.StringVar()
     Day = tk.StringVar()
     Month = tk.StringVar()
     Year = tk.StringVar()
@@ -111,22 +116,26 @@ def loan_id_insert(dataframe, dataframeLoan, variableString,filenameREPO, filena
     room = tk.Label(loanWin, text = "room/adress").grid(row=2, column=0, columnspan =2)
     roomF = tk.Entry(loanWin, textvariable = Room).grid(row=2, column=2, columnspan=5, sticky = "WE", padx=10)
     
-    dateLab = tk.Label(loanWin, text = "Date\nrestitution").grid(row=3, column=0, columnspan=1, padx=1)
-    dateEntry1= tk.Entry(loanWin, textvariable = Day, width=5).grid(row=3, column=2, columnspan =1, sticky = "WE", padx=1)
+    room = tk.Label(loanWin, text = "Contact").grid(row=3, column=0, columnspan =2)
+    roomF = tk.Entry(loanWin, textvariable = Contact).grid(row=3, column=2, columnspan=5, sticky = "WE", padx=10)
     
-    dateLab = tk.Label(loanWin, text = "-").grid(row=3, column=3, columnspan = 1,padx=1)
-    dateEntry1= tk.Entry(loanWin, textvariable = Month, width=5).grid(row=3, column=4, columnspan = 1, sticky = "WE", padx=1)
+    dateLab = tk.Label(loanWin, text = "Date\nrestitution").grid(row=4, column=0, columnspan=1, padx=1)
+    dateEntry1= tk.Entry(loanWin, textvariable = Day, width=5).grid(row=4, column=2, columnspan =1, sticky = "WE", padx=1)
+    
+    dateLab = tk.Label(loanWin, text = "-").grid(row=4, column=4, columnspan = 1,padx=1)
+    dateEntry1= tk.Entry(loanWin, textvariable = Month, width=5).grid(row=4, column=4, columnspan = 1, sticky = "WE", padx=1)
    
-    dateLab = tk.Label(loanWin, text = "-").grid(row=3, column=5, columnspan=1, padx=1)
-    dateEntry1= tk.Entry(loanWin, textvariable = Year, width=5).grid(row=3, column=6, columnspan=1, sticky = "WE", padx=1)
+    dateLab = tk.Label(loanWin, text = "-").grid(row=4, column=5, columnspan=1, padx=1)
+    dateEntry1= tk.Entry(loanWin, textvariable = Year, width=5).grid(row=4, column=6, columnspan=1, sticky = "WE", padx=1)
     
     
-    take = tk.Button(loanWin, text = "insert", command=lambda: loan_the_book(found_book,Name, Room,Day, Month, Year,loanWin,dataframe, dataframeLoan, variableString, filenameREPO, filenameLOAN)).grid(row = 4,column=1, padx = 10, pady=30, columnspan = 3)
+    take = tk.Button(loanWin, text = "insert", command=lambda: loan_the_book(found_book,Name, Room,Contact,Day, Month, Year,loanWin,dataframe, dataframeLoan, variableString, filenameREPO, filenameLOAN)).grid(row = 5,column=1, padx = 10, pady=30, columnspan = 3)
    
-def loan_the_book(found, Name, Room, Day, Month, Year,win, dataframe, dataframeLoan, variableString, filenameREPO, filenameLOAN):
+def loan_the_book(found, Name, Room,Contact, Day, Month, Year,win, dataframe, dataframeLoan, variableString, filenameREPO, filenameLOAN):
         
     nome = Name.get() 
     adress = Room.get()
+    contact = Contact.get()
     day = Day.get()
     month = Month.get()
     year = Year.get()
@@ -138,28 +147,29 @@ def loan_the_book(found, Name, Room, Day, Month, Year,win, dataframe, dataframeL
     today = datetime.date.today()
                  
     for column in found.columns:
-        if column == "Title" or column=="Título":
+        if column == init.SpecialVar["Title"]:
             SpecialVarTitle = found[column][found.index]
-        if column == "Author" or column=="Autor": 
+        if column == init.SpecialVar["Author"]: 
             SpecialVarAuthor = found[column][found.index]
-        if column == "Position" or column=="Estantería":
+        if column == init.SpecialVar["Position"]:
              SpecialVarPos = found[column][found.index]
     today = f"{today.day}-{today.month}-{today.year}"
-    book_to_append = {"Keeper": [nome], "Adress": [adress], "Title": SpecialVarTitle, "Author": SpecialVarAuthor, "Position" : SpecialVarPos, "Date of loan" : [today], "Date of restitution" : [day+"-"+month+"-"+year]}
+    book_to_append = {"Keeper": [nome], "Adress": [adress], "Title": SpecialVarTitle, "Author": SpecialVarAuthor, "Position" : SpecialVarPos, "Contact": [contact], "Date of loan" : [today], "Date of restitution" : [day+"-"+month+"-"+year]}
     
     book_to_append = pd.DataFrame(book_to_append)
     dataframeLoan = dataframeLoan.append(book_to_append)
-    
+    dataframeLoan["Date of restitution" ] =pd.to_datetime(dataframeLoan["Date of restitution" ])
+    dataframeLoan=dataframeLoan.sort_values(by="Date of restitution", ascending = False) 
     with open(filenameLOAN, 'w', encoding = "latin1" ) as f:
-            dataframeLoan.to_csv(f, sep = ",", index = False)
+            dataframeLoan.to_csv(f, sep = ";", index = False)
             
     
     dataframe["Available"][found.index] = "No"
     with open(filenameREPO, 'w', encoding = "latin1" ) as f:
-        dataframe.to_csv(f, sep = ",", index = False, encoding = "latin1")
+        dataframe.to_csv(f, sep = ";", index = False, encoding = "latin1")
     
     with open(filenameLOAN, 'r') as f:
-            dataframeLoan = pd.read_csv(f, sep = ",",  encoding = "latin1")
+            dataframeLoan = pd.read_csv(f, sep = ";",  encoding = "latin1")
             dataframeLoan = dataframeLoan.replace(np.nan, '', regex=True)
             dataframeLoan = dataframeLoan.astype(str)  
     
@@ -208,19 +218,19 @@ def resa(StringOfRestitution,win, dataframeLoan, dataframe, filenameREPO, filena
     init.dataframeLoan = init.dataframeLoan.drop(labels=Resultsdf.index, axis=0)
     
     with open(filenameLOAN, 'w', encoding = "latin1" ) as f:
-            init.dataframeLoan.to_csv(f, sep = ",", index = False)
+            init.dataframeLoan.to_csv(f, sep = ";", index = False)
     with open(filenameLOAN, 'r') as f:
-            dataframeLoan = pd.read_csv(f, sep = ",",  encoding = "latin1") 
+            dataframeLoan = pd.read_csv(f, sep = ";",  encoding = "latin1") 
             dataframeLoan = dataframeLoan.replace(np.nan, '', regex=True)
             dataframeLoan = dataframeLoan.astype(str)  
     for key, values in init.variableString.items():
-        if (key == "Title") ^ (key == "Título"):
+        if key == init.SpecialVar["Title"]:
             indexes = dataframe[key]
            
     Index = indexes[indexes == Resultsdf["Title"][Resultsdf.index[0]]].index.tolist()    
     dataframe["Available"][Index] = "Yes"
     with open(filenameREPO, 'w', encoding = "latin1" ) as f:
-        dataframe.to_csv(f, sep = ",", index = False)
+        dataframe.to_csv(f, sep = ";", index = False)
         
     init.dataframe = dataframe
     init.dataframeLoan = dataframeLoan
