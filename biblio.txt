@@ -1,7 +1,0 @@
-Title	Author	Position	Editorial	Year
-harry potter	Rowling	a55	la fenice	1990
-Il codice da vinci	Brown	b2	Erudita	2002
-il Signore degli anelli	Tolkien	d3	Oxford Express	1997
-L'idiota	Dostoeskij	d65	Zanichelli	1988
-Harry potter e il calice di fuoco	Rowling	f66	Queriniana	2010
-Le lettere di Berlicche	Lewis	g66	Mondadori	1980
